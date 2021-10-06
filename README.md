@@ -25,6 +25,12 @@ scripts/build_migraphx_docker_latest.sh
 ./build_migraphx.sh
 ```
 
+4. This is just for now, to remember to put ths somehwere
+```
+pip3 install tensorflow
+```
+
+
 4. Now run what you really wanted to do here
 ```
 ./run_check.sh
