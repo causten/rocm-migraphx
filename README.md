@@ -2,13 +2,16 @@
 This repository contains dockerfiles, scripts and artifacts related to
 AMD MIGraphX inference library.
 
-To get started use:
-   scripts/build_migraphx_docker.sh
-to build a docker image including a copy of MIGraphX.  Next run the docker
-image in a container with rocm-migraphx mounted (to create and save artifacts).
+## Getting Started:
+1. Run to build a docker image including a copy of MIGraphX
+> scripts/build_migraphx_docker.sh
 
-In this repository are the following components:
+2. Next run the docker mage in a container with rocm-migraphx mounted (to create and save artifacts).
+> docker run 
 
+## About this repo :
+
+```
    scripts/
       build_migraphx_docker.sh - build MIGraphX docker container
          build_prereqs.sh - script that builds prereq components
@@ -26,3 +29,4 @@ In this repository are the following components:
       slim - Tensorflow Slim models
       onnx-model-zoo - ONNX model zoo
    tools/ - tools used to create/save/run models, etc.
+```
