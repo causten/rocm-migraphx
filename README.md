@@ -13,6 +13,9 @@ scripts/build_migraphx_docker.sh
 docker run --device='/dev/kfd' --device='/dev/dri' -v=`pwd`:code/rocm-migraphx -w /code/rocm-migraphx --group-add video -it  --network="host" rocm-migraphx:4.3n
 cd scripts
 ./build_prereqs.sh
+
+# Build the tools folder
+cd ../tools
 ```
 
 NOTE: Steps 1 - 2 only need to be done once.  After the original container is build and you want to get the latest MIGraphX code in to the container (perhaps as part of a regualar cadence run the following instead.  This will save you time and download bandwidth...
