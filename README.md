@@ -5,12 +5,13 @@ AMD MIGraphX inference library.
 ## Getting Started:
 1. Run to build a docker image including a copy of MIGraphX
 ```
-scripts/build_migraphx_docker.sh
+cd scripts
+./build_migraphx_docker.sh
 ```
 
 2. Next run the docker image ensuring the rocm-migraphx directory is mounted (to create and save artifacts).  
 ``` 
-docker run --device='/dev/kfd' --device='/dev/dri' -v=`pwd`:code/rocm-migraphx -w /code/rocm-migraphx --group-add video -it  --network="host" rocm-migraphx:4.3n
+docker run --device='/dev/kfd' --device='/dev/dri' -v=`pwd`:/code/rocm-migraphx -w /code/rocm-migraphx --group-add video -it  --network="host" rocm-migraphx:4.5n
 cd scripts
 ./build_prereqs.sh
 
