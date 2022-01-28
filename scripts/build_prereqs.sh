@@ -6,6 +6,13 @@
 pip3 install onnx==1.7.0
 
 # pybind11
+if [ ! `grep -q "20.04" /etc/issue` ]; then
+    apt install -y software-properties-common
+    add-apt-repository -y ppa:deadsnakes/ppa
+    apt update
+    apt install -y python3.6-dev
+    apt install -y python3.8-dev
+fi
 cd /src
 git clone https://github.com/pybind/pybind11
 pip3 install pytest
