@@ -1,0 +1,11 @@
+--- hip_build_utils.cpp	2022-02-01 09:22:09.048963369 -0600
++++ hip_build_utils.cpp.patched	2022-02-01 09:19:14.295761216 -0600
+@@ -191,7 +191,7 @@
+     }
+     else if(IsHipClangCompiler())
+     {
+-        params += " -mllvm --amdgpu-spill-vgpr-to-agpr=0";
++        params += " -mllvm";
+     }
+ 
+ #if MIOPEN_BUILD_DEV
