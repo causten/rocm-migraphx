@@ -1,13 +1,38 @@
 #!/bin/bash
+set -x
+TEST_RESULTDIR=${TEST_RESULTDIR:="/home/mev/source/rocm-migraphx/test-results"}
+EXEDIR=${EXEDIR:="/workspace/onnxruntime/onnxruntime/python/tools/transformers"}
 
-# This works
-#python3 benchmark.py -g -o no_opt -b  1 2 4 8 16 -m bert-base-cased --sequence_length 128 --precision fp16 --provider rocm
-#python3 benchmark.py -g -o no_opt -b  1 2 4 8 16 -m bert-base-cased --sequence_length 128 --precision fp32 --provider rocm
-#python3 benchmark.py -g           -b  1 2 4 8 16 -m bert-base-cased --sequence_length 128 --precision fp16 --provider rocm
-
-# This fails
-#python3 profiler.py -g -m onnx_models/bert_base_cased_1.onnx -b 1 -s 128 -g --provider rocm
-
-# This fails (based on develop and migraphx_for_ort)
-#python3 benchmark.py -g -o no_opt -b  1 2 4 8 16 -m bert-base-cased --sequence_length 128 --precision fp16 --provider migraphx
-#python3 benchmark.py -g -o no_opt -b  1 2 4 8 16 -m bert-base-uncased --sequence_length 128 --precision fp16 --provider migraphx
+testdir=${TEST_RESULTDIR}/onnxruntime-`date '+%Y-%m-%d-%H-%M'`
+mkdir $testdir
+pushd /workspace/migraphx/src
+git log > $testdir/commit.txt
+popd
+cd ${EXEDIR}
+while read model batch sequence precision
+do
+    file="${model}-b${batch}-s${sequence}-${precision}"
+    tag="${model}-b${batch}-s${sequence}-${precision}-rocm"
+    python3 benchmark.py -g -b $batch -m $model --sequence_length $sequence --precision $precision --provider rocm --result_csv $testdir/${file}-summary.csv --detail_csv $testdir/${file}-detail.csv 1>$testdir/${tag}.out 2>$testdir/${tag}.err
+    tag="${model}-b${batch}-s${sequence}-${precision}-migraphx"
+    python3 benchmark.py -o no_opt -g -b $batch -m $model --sequence_length $sequence --precision $precision --provider migraphx --result_csv $testdir/${file}-summary.csv --detail_csv $testdir/${file}-detail.csv 1>$testdir/${tag}.out 2>$testdir/${tag}.err
+    if [ "$precision" = "fp32" ]; then
+	tag="${model}-b${batch}-s${sequence}-${precision}-torch"	
+	python3 benchmark.py -o no_opt -b $batch -m $model --sequence_length $sequence --precision $precision -e torch --result_csv $testdir/${file}-summary.csv --detail_csv $testdir/${file}-detail.csv 1>$testdir/${tag}.out 2>$testdir/${tag}.err
+	tag="${model}-b${batch}-s${sequence}-${precision}-torchscript"	
+	python3 benchmark.py -o no_opt -b $batch -m $model --sequence_length $sequence --precision $precision -e torchscript --result_csv $testdir/${file}-summary.csv --detail_csv $testdir/${file}-detail.csv 1>$testdir/${tag}.out 2>$testdir/${tag}.err
+	tag="${model}-b${batch}-s${sequence}-${precision}-cpu"		
+	python3 benchmark.py -o no_opt -b $batch -m $model --sequence_length $sequence --precision $precision -e cpu --result_csv $testdir/${file}-summary.csv --detail_csv $testdir/${file}-detail.csv 1>$testdir/${tag}.out 2>$testdir/${tag}.err	
+    fi
+    sort -u $testdir/${file}-detail.csv > ${testdir}/${file}-detail-sort.csv
+    sort -u $testdir/${file}-summary.csv > ${testdir}/${file}-summary-sort.csv
+done <<BMARK_LIST
+bert-base-cased 1 128 fp16
+bert-base-cased 1 128 fp32
+bert-base-cased 1 128 fp16
+bert-base-cased 1 128 fp32
+bert-large-uncased 1 128 fp16
+bert-large-uncased 1 128 fp32
+bert-large-uncased 1 128 fp16
+bert-large-uncased 1 128 fp32
+BMARK_LIST
