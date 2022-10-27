@@ -218,7 +218,7 @@ void print_node(onnx::NodeProto node){
   std::cout << "}" << std::endl;
 }
 
-int read_onnx_file(char *file,int dump_onnx_info=0, int conv_ops_only=0){
+int read_onnx_file(const char *file,int dump_onnx_info=0, int conv_info=0){
   onnx::ModelProto model;
   std::fstream input(file,std::ios::in | std::ios::binary);
   if (!model.ParseFromIstream(&input)){
@@ -241,9 +241,13 @@ int read_onnx_file(char *file,int dump_onnx_info=0, int conv_ops_only=0){
     for (auto&& metadata : model.metadata_props()){
       std::cout << "\t" << metadata.key() << " = " << metadata.value() << std::endl;
     }
-    if (model.has_graph()){
+  }
+  if (model.has_graph()){
+    if (dump_onnx_info > 1){
       std::cout << "    Graph: " << std::endl;
-      onnx::GraphProto graph = model.graph();
+    }
+    onnx::GraphProto graph = model.graph();
+    if (dump_onnx_info > 0){
       std::cout << "\tname =       " << graph.name() << std::endl;
       std::cout << "\tdoc string = " << graph.doc_string() << std::endl;
       std::cout << "\t# inputs =   " << graph.input_size() << std::endl;
@@ -266,27 +270,50 @@ int read_onnx_file(char *file,int dump_onnx_info=0, int conv_ops_only=0){
       }
       if (graph.initializer_size() > 0){
 	std::cout << "\t# initializers = " << graph.initializer_size() << std::endl;
-	for (auto&& initializer : graph.initializer()){
-	  std::cout << "\t";
-	  print_tensor(initializer);
-	  std::cout << std::endl;
+	if (dump_onnx_info > 1){
+	  for (auto&& initializer : graph.initializer()){
+	    std::cout << "\t";
+	    print_tensor(initializer);
+	    std::cout << std::endl;
+	  }
 	}
       }
-      if (graph.value_info_size() > 0){
+    }
+    if (graph.value_info_size() > 0){
+      if (dump_onnx_info > 1){
 	std::cout << "    Value Info: " << std::endl;
 	for (auto&& value : graph.value_info()){
 	  std::cout << "\t" << value.name();
 	  if (value.has_type()){
 	    std::cout << " ";
 	    print_type(value.type());
+	    std::cout << std::endl;
 	  }
 	}
+      } else if (dump_onnx_info > 0){
+	std::cout << "\t# value info = " << graph.value_info_size() << std::endl;
       }
+    } else if (dump_onnx_info == 0){
+      std::cerr << "warning: no value info found, may need to perform shape inference" << std::endl;	
+    }
+    if (dump_onnx_info > 1){
       std::cout << "    Nodes: " << std::endl;
-      for (auto&& node : graph.node()){
-	if ((conv_ops_only) && node.op_type().compare("Conv")) continue;
-	print_node(node);
+    } else if (dump_onnx_info > 0){
+      std::cout << "\t# nodes = " << graph.node_size() << std::endl;
+    }
+    for (auto&& node : graph.node()){
+      if ((conv_info) && (node.op_type().compare("Conv") == 0)){
+	std::cout << "Convolution" << std::endl;
+	std::cout << "\tinput1 : " << node.input(0) << std::endl;
+	std::cout << "\tinput2 : " << node.input(1) << std::endl;	
+	std::cout << "\toutput : " << node.output(0) << std::endl;
+	for (auto&& attribute : node.attribute()){
+	  print_attribute(attribute);
+	}
+	std::cout << std::endl;
       }
+      if (dump_onnx_info > 1)
+	print_node(node);
     }
   }
   return 0;
@@ -300,7 +327,7 @@ int main(int argc,char *argv[]){
     std::cerr << "Usage: " << argv[0] << " <ONNX file>" << std::endl;
     return 1;
   }
-  result = read_onnx_file(argv[1],1,0);
+  result = read_onnx_file(argv[1],2,0);
   return result;
 }
 #endif
